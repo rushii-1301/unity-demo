@@ -57,9 +57,10 @@ def get_lecture_json(grade: str, subject: str, lecture_id: str):
 # ---------------------------------------------------------
 
 @router.get("/chapter-materials/chapter_lecture/audio/{lecture_id}/{filename}")
-def get_audio_file(lecture_id: str, filename: str):
+def get_audio_file(lecture_id: str, filename: str, download: bool = False):
     """
     Serves MP3 or any audio files from static directory.
+    Add ?download=true to force download instead of streaming.
     """
 
     audio_path = Path(f"static/chapter-materials/chapter_lecture/audio/{lecture_id}/{filename}")
@@ -72,4 +73,15 @@ def get_audio_file(lecture_id: str, filename: str):
 
     # FastAPI automatically serves file as FileResponse
     from fastapi.responses import FileResponse
-    return FileResponse(audio_path)
+    
+    # If download=true, force download with Content-Disposition header
+    if download:
+        return FileResponse(
+            audio_path,
+            media_type="audio/mpeg",
+            filename=filename,
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    
+    # Otherwise, stream the audio for playback
+    return FileResponse(audio_path, media_type="audio/mpeg")
